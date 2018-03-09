@@ -1,0 +1,4 @@
+.shards/
+
+shard.lock
+lib/

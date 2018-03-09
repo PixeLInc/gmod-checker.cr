@@ -1,0 +1,13 @@
+name: GMod-PixeLInc
+version: 0.1.0
+
+authors:
+   - PixeLInc <officialpixelinc@gmail.com>
+
+dependencies:
+  raze:
+    github: samueleaton/raze
+  slang:
+    github: jeromegn/slang
+  pg:
+    github: will/crystal-pg
