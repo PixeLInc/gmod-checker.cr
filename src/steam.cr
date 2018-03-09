@@ -1,6 +1,5 @@
 module Steam
   class Converter
-
     def self.to_community(steam_id : String?) : Int64
       if steam_id =~ /^STEAM_[0-1]:([0-1]:[0-9]+)$/
         split = $1.split(':')
@@ -19,7 +18,6 @@ module Steam
 
       "STEAM_0:#{x}:#{(y - x) / 2}"
     end
-
   end
 
   class API
@@ -82,7 +80,6 @@ module Steam
       results
     end
 
-
     # Meant for one ID at a time!
     def self.send_request(community_id : Int64, type : Type = Type::Sharing)
       send_url = nil
@@ -104,7 +101,7 @@ module Steam
 
     def self.parse_response(response : Array(String), type : Type)
       parser = JSON::PullParser.new(response.join('\n'))
-      results = Responses::SteamInfo.new()
+      results = Responses::SteamInfo.new
 
       case type
       when Type::Sharing
