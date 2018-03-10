@@ -6,7 +6,6 @@ require "./steam.cr"
 require "./mappings.cr"
 
 module Steam
-
   get "/" do |ctx|
     render("views/index.slang")
   end
@@ -44,8 +43,6 @@ module Steam
       ws.send({"type" => "result", "title" => "REEEEEE", "desc" => "r e e e e e"}.to_json)
     end
   end
-
 end
-
 
 Raze.run
