@@ -1,7 +1,6 @@
 require "raze"
 require "kilt/slang"
 require "http/client"
-require "json"
 require "./steam.cr"
 require "./mappings.cr"
 
