@@ -4,6 +4,10 @@ version: 0.1.0
 authors:
    - PixeLInc <officialpixelinc@gmail.com>
 
+targets:
+  web:
+    main: src/web.cr
+
 dependencies:
   raze:
     github: samueleaton/raze
