@@ -1,3 +1,5 @@
+require "json"
+
 module Steam
   module Responses
     record SteamInfo, sharing : Bool? = false, lender : String? = nil, lender_name : String? = nil, steam_user : Summaries::SteamUser? = nil do
