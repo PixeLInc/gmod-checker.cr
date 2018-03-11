@@ -1,22 +1,49 @@
 module Steam
-  class Converter
-    def self.to_community(steam_id : String?) : Int64
-      if steam_id =~ /^STEAM_[0-1]:([0-1]:[0-9]+)$/
-        split = $1.split(':')
+  # Type representing Steam IDs. Can be used to convert an ID from one
+  # Steam ID format to another.
+  struct ID
+    # Pattern for 32 bit Steam IDs
+    STEAM_ID_32_REGEXP = /^STEAM_([0-1]:[0-1]:[0-9]+)$/
 
-        ((split[1].to_i * 2).to_i64 + split[0].to_i) + 76561197960265728
-      elsif steam_id =~ /^\[U:([0-1]:[0-9]+)\]$/
-        0_i64
+    # Pattern for Steam ID 3
+    STEAM_ID_3_REGEXP = /^\[U:([0-1]:[0-9]+)\]$/
+
+    @value : Int64
+
+    def initialize(id : String)
+      if id =~ STEAM_ID_32_REGEXP
+        universe, low, high = $1.split(':').map &.to_i64
+        @value = (universe << 56) | (1_i64 << 52) | (1_i64 << 32) | (high << 1) | low
+      elsif id =~ STEAM_ID_3_REGEXP
+        universe, high = $1.split(':').map &.to_i64
+        @value = (universe << 56) | (1_i64 << 52) | (1_i64 << 32) | high
       else
-        0_i64
+        raise "Unsupported ID format: #{id}"
       end
     end
 
-    def self.from_community(community_id : Int64)
-      y = community_id - 76561197960265728
-      x = y % 2
+    def initialize(@value : Int64)
+    end
 
-      "STEAM_0:#{x}:#{(y - x) / 2}"
+    # The ID in 64 bit format
+    def to_steam_64
+      @value
+    end
+
+    # The ID in ID 32 format
+    def to_steam_32
+      universe = (@value >> 56) & ((1_i64 << 8) - 1_i64)
+      id = @value & ((1_i64 << 32) - 1_i64)
+      low = id & 1
+      high = (id >> 1) & ((1_i64 << 31) - 1_i64)
+      "STEAM_#{universe}:#{low}:#{high}"
+    end
+
+    # The ID in ID 3 format
+    def to_steam_3
+      universe = (@value >> 56) & ((1_i64 << 8) - 1_i64)
+      id = @value & ((1_i64 << 32) - 1_i64)
+      "[U:#{universe}:#{id}]"
     end
   end
 
@@ -29,22 +56,22 @@ module Steam
     end
 
     def self.get_names(steam_ids : Array(Int64))
-      results = {} of String => Responses::Summaries::SteamUser
+      results = {} of String => Responses::SteamUser
 
       url = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=#{@@steam_api_key}&steamids=%s" % steam_ids.join(",")
 
       p url
 
       resp = HTTP::Client.get url
-      parser = JSON::PullParser.new(resp.body.lines.join('\n'))
+      parser = JSON::PullParser.new(resp.body)
 
       parser.on_key("response") do
-        summaries = Responses::Summaries.new(parser)
+        summaries = Array(Responses::SteamUser).from_json(resp.body, "players")
 
-        return nil if summaries.players.size <= 0
+        return nil if summaries.size <= 0
 
-        summaries.players.each do |player|
-          s_id = Converter.from_community(player.c_id.to_i64)
+        summaries.each do |player|
+          s_id = Steam::ID.new(player.c_id.to_i64)
           player.id = s_id
 
           results[player.c_id] = player
@@ -96,22 +123,19 @@ module Steam
       return {"error", "Invalid data"} if send_url.nil?
 
       response = HTTP::Client.get send_url
-      {community_id, self.parse_response(response.body.lines, type)}
+      {community_id, self.parse_response(response.body, type)}
     end
 
-    def self.parse_response(response : Array(String), type : Type)
-      parser = JSON::PullParser.new(response.join('\n'))
+    def self.parse_response(response, type : Type)
       results = Responses::SteamInfo.new
 
       case type
       when Type::Sharing
-        parser.on_key("response") do
-          shared = Steam::Responses::Shared.new(parser)
+        shared = Steam::Responses::Shared.from_json(response)
 
-          if shared.lender != "0"
-            results.sharing = true
-            results.lender = shared.lender
-          end
+        if shared.lender != "0"
+          results.sharing = true
+          results.lender = shared.lender
         end
       end
 

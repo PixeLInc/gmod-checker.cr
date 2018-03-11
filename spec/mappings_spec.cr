@@ -1,7 +1,7 @@
 require "./spec_helper"
 
 module Steam::Responses
-  describe Summaries::SteamUser do
+  describe SteamUser do
     it "can be converted from JSON with a root key" do
       json = <<-JSON
         {
@@ -12,7 +12,7 @@ module Steam::Responses
           ]
         }
         JSON
-      Array(Summaries::SteamUser).from_json(json, "players")
+      Array(SteamUser).from_json(json, "players")
     end
   end
 end

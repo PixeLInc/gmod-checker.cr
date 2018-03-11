@@ -2,27 +2,18 @@ require "json"
 
 module Steam
   module Responses
-    record SteamInfo, sharing : Bool? = false, lender : String? = nil, lender_name : String? = nil, steam_user : Summaries::SteamUser? = nil do
-      JSON.mapping(
-        sharing: {type: Bool?, default: false},
-        lender: {type: String?, default: nil},
-        lender_name: {type: String?, default: nil},
-        steam_user: {type: Summaries::SteamUser?, default: nil}
-      )
-    end
+    record(
+      SteamInfo,
+      sharing : Bool? = false,
+      lender_user : SteamUser? = nil,
+      steam_user : SteamUser? = nil)
 
-    class Summaries
-      class SteamUser
-        JSON.mapping(
-          id: {type: String?, default: nil},
-          c_id: {type: String, key: "steamid"},
-          personaname: String,
-          avatar: {type: String, key: "avatarfull"}
-        )
-      end
-
+    class SteamUser
       JSON.mapping(
-        players: Array(SteamUser)
+        id: {type: String?, default: nil},
+        c_id: {type: String, key: "steamid"},
+        personaname: String,
+        avatar: {type: String, key: "avatarfull"}
       )
     end
 
@@ -42,10 +33,6 @@ module Steam
           img_logo_url: String
         )
       end
-
-      JSON.mapping(
-        games: Array(SteamGame)
-      )
     end
   end
 end
