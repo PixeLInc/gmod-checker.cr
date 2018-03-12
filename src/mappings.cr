@@ -4,35 +4,49 @@ module Steam
   module Responses
     record(
       SteamInfo,
-      sharing : Bool? = false,
+      sharing : Bool = false,
       lender_user : SteamUser? = nil,
       steam_user : SteamUser? = nil)
 
-    class SteamUser
+    struct SteamUser
       JSON.mapping(
         id: {type: String?, default: nil},
-        c_id: {type: String, key: "steamid"},
-        personaname: String,
+        community_id: {type: String, key: "steamid"},
+        persona_name: {type: String, key: "personaname"},
         avatar: {type: String, key: "avatarfull"}
       )
     end
 
-    class Shared
+    struct Shared
       JSON.mapping(
         lender: {type: String, key: "lender_steamid"}
       )
     end
 
-    class Recent
-      class SteamGame
-        JSON.mapping(
-          appId: Int32,
-          name: String,
-          playtime_2weeks: Float32,
-          playtime_forever: Float32,
-          img_logo_url: String
-        )
+    struct SteamGame
+      JSON.mapping(
+        app_id: {type: Int32, key: "appId"},
+        name: String,
+        playtime_two_weeks: {type: Float32, key: "playtime_2weeks"},
+        playtime_forever: Float32,
+        img_logo_url: String
+      )
+    end
+  end
+
+  module SteamResponseConverter
+    def self.from_json(string : String)
+      from_json JSON::PullParser.new(string)
+    end
+
+    def self.from_json(parser : JSON::PullParser)
+      results = [] of Responses::SteamUser
+      parser.on_key("response") do
+        parser.on_key("players") do
+          results = Array(Responses::SteamUser).new(parser)
+        end
       end
+      results
     end
   end
 end

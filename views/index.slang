@@ -147,9 +147,15 @@ html
       function createCard(title, desc, sobj, suser) {
         $('.results').append(`
           <div class='card'>
+            <!-- Profile Picture here :O
+              <img src='avatar_url'/>
+            -->
             <h1 style='color: ${sobj.sharing ? 'darkred' : 'green'}'> ${title} </h1>
             <p> ${desc} </p>
-            <span class='cardlinks'> <a href='http://steamcommunity.com/profiles/${suser.steamid}> Profile of user </a> </span>
+            <span class='cardlinks'>
+              <a href='http://steamcommunity.com/profiles/${suser.steamid}> Profile of user </a> |
+              <a href='lender_url'> Profile of Lender </a>
+            </span>
           </div>
         `);
       }
@@ -221,6 +227,3 @@ html
           $('.error').hide().html('<p> No valid IDs passed </p>').fadeIn();
         }
       }
-
-
-

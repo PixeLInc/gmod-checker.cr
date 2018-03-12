@@ -10,25 +10,42 @@ module Steam
   end
 
   def self.run_check(steam_ids)
-    results = API.send_request(steam_ids)
+    # results = client.sharing_info(steam_ids)
+    # results = Client.send_request(steam_ids)
 
-    p results
+    # p results
 
-    results
+    # results
+    [] of Steam::Responses::SteamUser
   end
+
+  record(
+    InvalidID,
+    steam_id : String?,
+    invalid : Bool = true
+  )
 
   get "/check" do |ctx|
     sids = ctx.query["steamids"]?
 
-    ctx.halt({"error": "Invalid Steam ID(s) passed"}.to_json, 400) if !sids || sids == ""
+    ctx.halt({"error": "Missing steamids param"}.to_json, 400) if !sids || sids.empty?
     ctx.response.content_type = "application/json"
 
     if sids.is_a?(String)
-      sids = sids.gsub(/\s+/, "").split(',')
-      sids, _bad = sids.partition { |id| id.match(/^STEAM_[0-5]:[01]:\d+$/) }
-      results = self.run_check(sids)
+      sids = sids.split(',').map do |e|
+        begin
+          Steam::ID.new(e)
+        rescue Steam::ID::InvalidIDException
+          InvalidID.new(e)
+        end
+      end
 
-      {"type" => "batch_result", "results" => [results]}.to_json
+      results = [] of Steam::Responses::SteamUser | InvalidID
+      valid_ids, invalid_ids = sids.partition { |steam_id| steam_id.is_a?(Steam::ID) }
+      results = self.run_check(valid_ids)
+      results = invalid_ids
+
+      {"type" => "batch_result", "results" => "test"}.to_json
     end
   end
 

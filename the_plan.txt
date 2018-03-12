@@ -1,0 +1,36 @@
+The Plan
+
+- My Jumbled Thoughts -
+The user goes to the website, main home page pops up with all the fanciness and then they throw in some steam ids into the textarea
+and press 'Submit'.
+The request goes through client-side validation for the UI in the browser just to make life easier on the server or whatever.
+
+The javascript checks the steam ids by regex matching them out of the text, grabs the matched ones and throws them into an array thingy.
+Then, it gets converted into a String split by commas and sent off to the server under the `/check` endpoint using AJAX for a batch request, or websockets.
+
+The server receives the request, and then also does server-side validation on the steam ids just in case it was sent from the API part and not the user friendly UI.
+It then converts all incoming Steam IDs into a `Steam::ID` object and partitions the valid ones into a var and the invalid ones into another.
+Then, it's time to check the valid steam ids against Steam for sharing.
+
+The best way I can think of to check against Steam is to just to a giant request with every steam id instead of individual requests to Steam.
+You would have to send the sharing request to steam all using individual requests since steam doesnt offer a batch one for some reason..
+Then, throw all those into an Array or something making sure that the Original steam id and the lending steam id are together so you can tell who is sharing with who.
+Then send the names request to steam and grab their names and pictures and such and update the user, or create the user? with the corresponding data you got from it.
+
+This should potentially return SteamUser objects for each user and then throw that into a Class thing and the json should maybe look like:
+{
+  "results": [
+    0: {
+      "original": {
+        "id": "steam_id",
+        "avatar": "url_here"
+      },
+      // Lender would only be included into the JSON if there is a lender, otherwise it can be excluded.
+      "lender": {
+        "id": "steam_id",
+        "avatar": "reee"
+      }
+    }
+    1: {}.... and so on.
+  ]
+}

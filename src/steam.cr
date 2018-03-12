@@ -2,6 +2,9 @@ module Steam
   # Type representing Steam IDs. Can be used to convert an ID from one
   # Steam ID format to another.
   struct ID
+    class InvalidIDException < Exception
+    end
+
     # Pattern for 32 bit Steam IDs
     STEAM_ID_32_REGEXP = /^STEAM_([0-1]:[0-1]:[0-9]+)$/
 
@@ -18,7 +21,7 @@ module Steam
         universe, high = $1.split(':').map &.to_i64
         @value = (universe << 56) | (1_i64 << 52) | (1_i64 << 32) | high
       else
-        raise "Unsupported ID format: #{id}"
+        raise InvalidIDException.new("Unsupported ID format: #{id}")
       end
     end
 
@@ -47,99 +50,65 @@ module Steam
     end
   end
 
-  class API
-    @@steam_api_key = "hey wow, an api key goes here!"
+  class Client
+    BASE_URL = "http://api.steampowered.com"
 
-    enum Type
-      Sharing
-      Recent
+    def initialize(@api_key : String)
     end
 
-    def self.get_names(steam_ids : Array(Int64))
+    def names(steam_infos : Array(Responses::SteamInfo))
       results = {} of String => Responses::SteamUser
 
-      url = "http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=#{@@steam_api_key}&steamids=%s" % steam_ids.join(",")
+      query = HTTP::Params.build do |form|
+        form.add "steamids", steam_infos.map { |info| id.to_steam_64 }.join(',')
+      end
+      repsonse = get("/ISteamUser/GetPlayerSummaries/v0002?#{query}")
 
-      p url
-
-      resp = HTTP::Client.get url
-      parser = JSON::PullParser.new(resp.body)
-
-      parser.on_key("response") do
-        summaries = Array(Responses::SteamUser).from_json(resp.body, "players")
-
-        return nil if summaries.size <= 0
-
-        summaries.each do |player|
-          s_id = Steam::ID.new(player.c_id.to_i64)
-          player.id = s_id
-
-          results[player.c_id] = player
-        end
+      users = SteamResponseConverter.from_json(response)
+      users.each do |user|
+        id = ID.new(user.community_id)
+        user.id = id.to_steam_32
+        results[id.to_steam_64] = user
       end
 
       results
     end
 
-    def self.send_request(steam_ids : Array(String), type : Type = Type::Sharing)
-      # convert all of them to 64's and query server for their names.
-      steam_ids = steam_ids.map { |id| Steam::Converter.to_community(id).to_i64 }
-
-      names = self.get_names(steam_ids)
-
-      return {"error": "No players!"} if names.nil?
-
-      results = {} of Int64 => Responses::SteamInfo
-      steam_ids.map do |id|
-        com, res = self.send_request(id)
-
-        if res.is_a?(String)
-          p res
-          next
+    def sharing_info(steam_ids : Array(Steam::ID))
+      # Check the supplied steam ids against steam for sharing.
+      steam_ids.map do |steam_id|
+        query = HTTP::Params.build do |form|
+          form.add "steam_id", steam_id.to_steam_64
+          form.add "appid_playing", "4000"
+          form.add "format", "json"
         end
 
-        p res
-        res.steam_user = names[com.to_s]
+        response = get("/IPlayerService/IsPlayingSharedGame/v0001?#{query}")
 
-        results[id] = res
+        parse_response(response, steam_id)
       end
 
-      results
+      # return Array(SteamUser) here?
     end
 
-    # Meant for one ID at a time!
-    def self.send_request(community_id : Int64, type : Type = Type::Sharing)
-      send_url = nil
-
-      case type
-      when Type::Sharing
-        send_url = "http://api.steampowered.com/IPlayerService/IsPlayingSharedGame/v0001/?key=#{@@steam_api_key}&steamid=%s&appid_playing=4000&format=json" % community_id
-      when Type::Recent
-        # make the request, parse the response
-      else
-        return {"error", "Invalid type"}
-      end
-
-      return {"error", "Invalid data"} if send_url.nil?
-
-      response = HTTP::Client.get send_url
-      {community_id, self.parse_response(response.body, type)}
+    def get(endpoint : String)
+      response = HTTP::Client.get "#{BASE_URL}#{endpoint}&key=#{@api_key}"
+      response.body
     end
 
-    def self.parse_response(response, type : Type)
-      results = Responses::SteamInfo.new
+    def parse_response(response, original_id, type : Type = Type::Sharing)
+      sharing = false
+      lender = nil
 
       case type
       when Type::Sharing
         shared = Steam::Responses::Shared.from_json(response)
 
-        if shared.lender != "0"
-          results.sharing = true
-          results.lender = shared.lender
-        end
+        sharing = true
+        lender = shared.lender
       end
 
-      results
+      Responses::SteamInfo.new(sharing, original_id, lender)
     end
   end
 end
