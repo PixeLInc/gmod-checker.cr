@@ -25,6 +25,8 @@ module Steam
     invalid : Bool = true
   )
 
+  # For the web api version
+  # TODO: Do this later, websocket is priority and the api equiv for other users can be done later.
   get "/check" do |ctx|
     sids = ctx.query["steamids"]?
 
@@ -49,8 +51,15 @@ module Steam
     end
   end
 
+  # For websocket checking
+  post "/check" do |ctx|
+    # return a randomly generated nonce that must be verified upon connection.
+  end
+
   ws "/ws" do |ws, ctx|
     puts "We got a new socket connection!"
+
+    # Wait for a nonce, if none is recieved within 30 seconds or it's invalid, terminate the connection.
 
     ws.on_message do |msg|
       puts "New Message! #{msg}"

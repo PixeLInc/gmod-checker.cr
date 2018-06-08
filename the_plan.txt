@@ -28,9 +28,42 @@ This should potentially return SteamUser objects for each user and then throw th
       // Lender would only be included into the JSON if there is a lender, otherwise it can be excluded.
       "lender": {
         "id": "steam_id",
-        "avatar": "reee"
+        "avatar": "gayyyyy"
       }
     }
     1: {}.... and so on.
   ]
 }
+
+TLDR:
+The user sends a request to the webserver with the IDs
+the server then filters out the bad IDs and grabs the names of the valid ones, regardless of if they're sharing or not.
+it is then passed on to the check function that checks if the steam ids are in fact sharing
+then, it reports back to the user via the UI or JSON depending on how they sent the request.
+
+--- Websocket stuffs | Priority cuz the web based api for other users can come later cuz fuck them kthx.
+More worried about just getting the actual website done and then the api for the other peoples can be made
+
+Use a buffer and start loading it up as soon as the user POSTs le ID's to /check and receives a nonce back.
+Then, once they connect via web socket and send over the nonce, start throwing things at the user from the buffer, but nicely so they dont leave.
+If we don't receive a connection from either A. The users IP (maybe we can track that) or B. if we just don't receive the nonce within ~30 seconds, DELET and stop waiting.
+
+# @channels = {} of Nonce => Channel(SharingResult)
+# channel = new_channel(params["ids"].size)
+
+# ids = [] of ID
+# params["ids"].each do |raw_id|
+#   begin
+#     ids << ID.new(raw_id)
+#   rescue Steam::ID::Error
+#     # immediately send invalid user payload to channel
+#   end
+# end
+
+# record SharingResult, player : Player, lender : Lender?
+
+# players = client.get_players(ids)
+# players.each do |player|
+#   lender = get_lender_id(player.id)
+#   channel.send SharingResult.new(player, lender)
+# end

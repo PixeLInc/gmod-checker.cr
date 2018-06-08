@@ -44,9 +44,15 @@ describe Steam::ID do
 
   describe "#initialize" do
     it "raises with an unknown ID format" do
-      expect_raises(Exception) do
+      expect_raises(Steam::ID::Error, "Unsupported ID format: foo") do
         Steam::ID.new("foo")
       end
     end
+  end
+
+  it ".new(pull_parser)" do
+    parser = JSON::PullParser.new(%("0"))
+    expected = Steam::ID.new(0_i64)
+    Steam::ID.new(parser).should eq expected
   end
 end
