@@ -19,20 +19,4 @@ module Steam
       img_logo_url: String
     )
   end
-
-  # module SteamResponseConverter
-  #   def self.from_json(string : String)
-  #     from_json JSON::PullParser.new(string)
-  #   end
-  #
-  #   def self.from_json(parser : JSON::PullParser)
-  #     results = [] of Responses::SteamUser
-  #     parser.on_key("response") do
-  #       parser.on_key("players") do
-  #         results = Array(Responses::SteamUser).new(parser)
-  #       end
-  #     end
-  #     results
-  #   end
-  # end
 end

@@ -32,6 +32,10 @@ struct Steam::ID
   def initialize(@value : Int64)
   end
 
+  def to_json(builder : JSON::Builder)
+    builder.string @value.to_s
+  end
+
   # The ID in 64 bit format
   def to_steam_64
     @value

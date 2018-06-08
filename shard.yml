@@ -6,7 +6,7 @@ authors:
 
 targets:
   web:
-    main: src/web.cr
+    main: src/run.cr
 
 dependencies:
   raze:

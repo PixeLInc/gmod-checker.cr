@@ -11,21 +11,18 @@ describe "#serialize" do
   player_json = %({"steamid":"1","personaname":"foo","avatarfull":"bar","profileurl":"url"})
   player = Steam::Player.from_json(player_json)
 
-  object =
   it_serializes(
-   Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
-   to: %({"nonce":"0","type":"result","data":{"player":#{player_json},"lender_id":"0"}})
+    Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
+    to: %({"nonce":"0","type":"result","data":{"player":#{player_json},"lender_id":"0"}})
   )
 
-  object =
   it_serializes(
-   Job::Result.new(player: player, lender_id: nil),
-   to: %({"nonce":"0","type":"result","data":{"player":#{player_json},"lender_id":null}})
+    Job::Result.new(player: player, lender_id: nil),
+    to: %({"nonce":"0","type":"result","data":{"player":#{player_json},"lender_id":null}})
   )
 
-  object =
   it_serializes(
-   Job::Error.new("bad id"),
-   to: %({"nonce":"0","type":"error","message":"bad id"})
+    Job::Error.new("bad id"),
+    to: %({"nonce":"0","type":"error","message":"bad id"})
   )
 end

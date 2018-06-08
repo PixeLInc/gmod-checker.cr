@@ -1,7 +1,7 @@
 module JobController
   extend self
 
-  alias Nonce = UInt64
+  alias Nonce = String
 
   # TODO
   TIMEOUT = 0
@@ -19,7 +19,7 @@ module JobController
   end
 
   def generate_nonce : Nonce
-    Random.rand(UInt64::MAX)
+    Random.rand(UInt64::MAX).to_s
   end
 
   def cleanup(nonce)

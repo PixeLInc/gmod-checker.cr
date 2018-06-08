@@ -4,7 +4,7 @@ player = Steam::Player.from_json %({"steamid": "1", "personaname": "foo", "avata
 objects = {
   Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
   Job::Result.new(player: player, lender_id: nil),
-  Job::Error.new("foo")
+  Job::Error.new("foo"),
 }
 
 describe Job do
@@ -48,13 +48,13 @@ describe JobController do
       end
 
       expect_raises(KeyError) do
-        JobController.dispatch(nonce) {}
+        JobController.dispatch(nonce) { }
       end
     end
 
     it "raises on an unknown nonce" do
       expect_raises(KeyError) do
-        JobController.dispatch(0_u64) {}
+        JobController.dispatch(JobController.generate_nonce) { }
       end
     end
   end
