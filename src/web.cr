@@ -1,73 +1,77 @@
 require "raze"
 require "kilt/slang"
 require "http/client"
-require "./steam.cr"
-require "./mappings.cr"
+require "./steam"
+require "./mappings"
+require "./job_controller"
 
-module Steam
-  get "/" do |ctx|
-    render("views/index.slang")
-  end
-
-  def self.run_check(steam_ids)
-    # results = client.sharing_info(steam_ids)
-    # results = Client.send_request(steam_ids)
-
-    # p results
-
-    # results
-    [] of Steam::Responses::SteamUser
-  end
-
-  record(
-    InvalidID,
-    steam_id : String?,
-    invalid : Bool = true
-  )
-
-  # For the web api version
-  # TODO: Do this later, websocket is priority and the api equiv for other users can be done later.
-  get "/check" do |ctx|
-    sids = ctx.query["steamids"]?
-
-    ctx.halt({"error": "Missing steamids param"}.to_json, 400) if !sids || sids.empty?
-    ctx.response.content_type = "application/json"
-
-    if sids.is_a?(String)
-      sids = sids.split(',').map do |e|
-        begin
-          Steam::ID.new(e)
-        rescue Steam::ID::InvalidIDException
-          InvalidID.new(e)
-        end
+def serialize(nonce, result)
+  JSON.build do |builder|
+    builder.object do
+      builder.field("nonce", nonce.to_s)
+      builder.string "type"
+      if result.is_a?(Job::Result)
+        builder.string "result"
+        builder.string "data"
+        result.to_json(builder)
+      elsif result.is_a?(Exception)
+        builder.string "error"
+        builder.field("message", result.message)
       end
-
-      results = [] of Steam::Responses::SteamUser | InvalidID
-      valid_ids, invalid_ids = sids.partition { |steam_id| steam_id.is_a?(Steam::ID) }
-      results = self.run_check(valid_ids)
-      results = invalid_ids
-
-      {"type" => "batch_result", "results" => "test"}.to_json
-    end
-  end
-
-  # For websocket checking
-  post "/check" do |ctx|
-    # return a randomly generated nonce that must be verified upon connection.
-  end
-
-  ws "/ws" do |ws, ctx|
-    puts "We got a new socket connection!"
-
-    # Wait for a nonce, if none is recieved within 30 seconds or it's invalid, terminate the connection.
-
-    ws.on_message do |msg|
-      puts "New Message! #{msg}"
-      # Just send some random data back for now.
-
-      ws.send({"type" => "result", "title" => "REEEEEE", "desc" => "r e e e e e"}.to_json)
     end
   end
 end
 
-Raze.run
+client = Steam::Client.new(ENV["STEAM_API_KEY"])
+
+get "/" do |ctx|
+  render("views/index.slang")
+end
+
+post "/api/check" do |ctx|
+  # TODO: validate request
+  raw_ids = ctx.query["steamids"].split(',')
+
+  # ctx.halt({"error": ""}, 400) if !raw_ids || raw_ids == ""
+
+  nonce = JobController.create(raw_ids.size) do |job|
+    ids = [] of Steam::ID
+    raw_ids.each do |string|
+      begin
+        ids << Steam::ID.new(string)
+      rescue ex : Steam::ID::Error
+        # TODO: Add ID
+        job.send Job::Error.new(ex.message)
+      end
+    end
+
+    # TODO: check if more than 100, maybe do this in middleware
+    # for request validation
+    players = client.get_players(ids)
+
+    players.each do |player|
+      lender_id = client.get_lender_id(player.id)
+      job.send Job::Result.new(player, lender_id)
+    end
+  end
+
+  {nonce: nonce}.to_json
+end
+
+# WS Payloads (spec for each of these):
+# {"nonce": 123, "type": "error", "message": "bad id"}
+# {"nonce": 123, "type": "result", "data": {"player": {}, "lender_id": "123"}}
+# {"nonce": 123, "type": "result", "data": {"player": {}, "lender_id": null}}
+ws "/api/relay" do |ws, ctx|
+  ws.on_message do |message|
+    # Client sends: {"nonce": 123}
+    nonce = JobController::Nonce.from_json(message, "nonce")
+    JobController.dispatch(nonce) do |result|
+      payload = serialize(nonce, result)
+      ws.send(payload)
+    end
+  rescue ex : JSON::ParseException | KeyError
+    payload = serialize(nonce, ex)
+    ws.send(payload)
+  end
+end
