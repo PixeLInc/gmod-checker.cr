@@ -1,4 +1,6 @@
 language: crystal
+env:
+  - STEAM_API_KEY=test
 script:
   - crystal tool format --check src/
   - crystal tool format --check spec/
