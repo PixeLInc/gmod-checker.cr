@@ -20,9 +20,11 @@ struct Steam::ID
   def initialize(id : String)
     if id =~ STEAM_ID_32_REGEXP
       universe, low, high = $1.split(':').map &.to_i64
+      universe = 1_i64
       @value = (universe << 56) | (1_i64 << 52) | (1_i64 << 32) | (high << 1) | low
     elsif id =~ STEAM_ID_3_REGEXP
       universe, high = $1.split(':').map &.to_i64
+      universe = 1_i64
       @value = (universe << 56) | (1_i64 << 52) | (1_i64 << 32) | high
     else
       raise Error.new("Unsupported ID format: #{id}")
