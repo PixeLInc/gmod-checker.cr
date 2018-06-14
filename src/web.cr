@@ -14,6 +14,10 @@ def serialize(nonce, result)
         builder.string "result"
         builder.string "data"
         result.to_json(builder)
+      elsif result.is_a?(Job::Error)
+        builder.string "error"
+        builder.field("message", result.message)
+        builder.field("data", result.id)
       elsif result.is_a?(Exception)
         builder.string "error"
         builder.field("message", result.message)
@@ -36,12 +40,11 @@ post "/api/check" do |ctx|
 
   nonce = JobController.create(raw_ids.size) do |job|
     ids = [] of Steam::ID
-    raw_ids.each do |string|
+    raw_ids.each do |string_id|
       begin
-        ids << Steam::ID.new(string)
+        ids << Steam::ID.new(string_id)
       rescue ex : Steam::ID::Error
-        # TODO: Add ID
-        job.send Job::Error.new(ex.message)
+        job.send Job::Error.new(string_id, ex.message)
       end
     end
 
