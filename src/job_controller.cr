@@ -50,7 +50,14 @@ class Job
     end
   end
 
-  class Error < Exception
+  class Error
+    JSON.mapping(
+      id: {type: String?, emit_null: true},
+      message: {type: String?, emit_null: true}
+    )
+
+    def initialize(@id : String?, @message : String?)
+    end
   end
 
   getter size

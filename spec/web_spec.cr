@@ -22,7 +22,7 @@ describe "#serialize" do
   )
 
   it_serializes(
-    Job::Error.new("bad id"),
-    to: %({"nonce":"0","type":"error","message":"bad id"})
+    Job::Error.new(id: "invalid id", message: "message"),
+    to: %({"nonce":"0","type":"error","message":"message","data":"invalid id"})
   )
 end

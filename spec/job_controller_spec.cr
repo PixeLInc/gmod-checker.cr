@@ -4,7 +4,7 @@ player = Steam::Player.from_json %({"steamid": "1", "personaname": "foo", "avata
 objects = {
   Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
   Job::Result.new(player: player, lender_id: nil),
-  Job::Error.new("foo"),
+  Job::Error.new(id: "foo", message: "bar"),
 }
 
 describe Job do
