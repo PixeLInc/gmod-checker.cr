@@ -51,6 +51,13 @@ post "/api/check" do |ctx|
     # TODO: check if more than 100, maybe do this in middleware
     # for request validation
     players = client.get_players(ids)
+    player_ids = players.map &.id
+
+    ids.each do |id|
+      unless player_ids.includes? id
+        job.send Job::Error.new(id.to_steam_32, "Steam ID not found: #{id.to_steam_32}")
+      end
+    end
 
     players.each do |player|
       lender_id = client.get_lender_id(player.id)
