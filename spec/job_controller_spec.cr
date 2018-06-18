@@ -1,6 +1,11 @@
 require "./spec_helper"
 
-player = Steam::Player.from_json %({"steamid": "1", "personaname": "foo", "avatarfull": "bar", "profileurl": "url"})
+player = Steam::Player.new(
+  id: Steam::ID.new(1),
+  persona_name: "persona_name",
+  avatar: "avatar",
+  profile_url: "profile_url")
+
 objects = {
   Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
   Job::Result.new(player: player, lender_id: nil),

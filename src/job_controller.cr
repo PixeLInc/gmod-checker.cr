@@ -41,20 +41,21 @@ end
 
 class Job
   struct Result
-    JSON.mapping(
-      player: Steam::Player,
-      lender_id: {type: Steam::ID?, emit_null: true}
-    )
+    include JSON::Serializable
+
+    getter player : Steam::Player
+
+    @[JSON::Field(emit_null: true)]
+    getter lender_id : Steam::ID?
 
     def initialize(@player : Steam::Player, @lender_id : Steam::ID?)
     end
   end
 
   class Error
-    JSON.mapping(
-      id: {type: String?, emit_null: true},
-      message: {type: String?, emit_null: true}
-    )
+    getter id
+
+    getter message
 
     def initialize(@id : String?, @message : String?)
     end

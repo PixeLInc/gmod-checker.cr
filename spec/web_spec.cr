@@ -8,8 +8,12 @@ def it_serializes(object, to string)
 end
 
 describe "#serialize" do
-  player_json = %({"steamid":"1","personaname":"foo","avatarfull":"bar","profileurl":"url"})
-  player = Steam::Player.from_json(player_json)
+  player = Steam::Player.new(
+    id: Steam::ID.new(1),
+    persona_name: "persona_name",
+    avatar: "avatar",
+    profile_url: "profile_url")
+  player_json = player.to_json
 
   it_serializes(
     Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
