@@ -45,11 +45,11 @@ struct Steam::ID
 
   # The ID in ID 32 format
   def to_steam_32
-    universe = (@value >> 56) & ((1_i64 << 8) - 1_i64)
+    # universe = (@value >> 56) & ((1_i64 << 8) - 1_i64)
     id = @value & ((1_i64 << 32) - 1_i64)
     low = id & 1
     high = (id >> 1) & ((1_i64 << 31) - 1_i64)
-    "STEAM_#{universe}:#{low}:#{high}"
+    "STEAM_0:#{low}:#{high}"
   end
 
   # The ID in ID 3 format

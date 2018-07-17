@@ -5,6 +5,7 @@ html
     link href="https://fonts.googleapis.com/css?family=Lato" rel="stylesheet"
     script src="https://code.jquery.com/jquery-2.1.1.min.js"
     script src="settings.js"
+    script src="websocket.js"
 
     css:
       body {
@@ -44,6 +45,23 @@ html
       .results {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(30%, 1fr));
+      }
+
+      .card > h1 {
+        margin-bottom: -10px;
+      }
+
+      .card > h1 > a {
+        text-decoration: none;
+        color: white;
+        cursor: pointer;
+      }
+
+      .card > h1 > a > img {
+        width: 16px;
+        height: 16px;
+        position: absolute;
+        margin-top: 12px;
       }
 
       .card {
@@ -92,13 +110,19 @@ html
         border: 1px solid red;
         padding: 2px 10px;
       }
+
+      .card img {
+        width: 4em;
+        float: right;
+
+        padding: 5px;
+      }
   body
     div.maincontent
       div.card
         h1 Garry's Mod
-        p A simplistic Garry's Mod tool to check the sharing status and weekly hours of multiple Steam IDs
+        p A simplistic Garry's Mod tool to check the sharing status of multiple Steam IDs
         p Just paste in a list of Steam IDs, or type them in however you want.
-        p Please note - The request may take some time depending on how many steam ids you put. In the future I will be doing a more live implementation (which ive started already) but for now its just one big bulk request!
         div.error
         br
         textarea id="steam_ids" placeholder="STEAM_0:X:XXXX, STEAM_0:XXXX\nSTEAM_0:X:XXXX STEAM_0:X:XXXX"
@@ -106,8 +130,8 @@ html
         span
           input type="radio" value="Shared" id="shared" name="check" checked="checked"
           label Shared
-          input type="radio" value="Weekly" name="check"
-          label Weekly
+          input type="radio" value="Weekly" name="check" disabled=true
+          label style="color: gray" Weekly
         br
         input type="button" value="Check" id="check-btn"
 
@@ -123,7 +147,7 @@ html
         p This is some text, wow!
 
     div.results
-      div.card
+      div.card#placeholder
         h1 Your results
         p will display here!
 
@@ -137,56 +161,69 @@ html
         }
       }
 
-      window.onload = function(event) {
-        if (currentMode == 'websocket') {
-          connect();
-          registerCallback(ws_callback);
+      // {"nonce": "123", "type": "batch_players", "data": { "players": [{}, {}] }}
+      function updateCard(data) {
+        data = data.data;
+        var players = data.players;
+
+        if (players.length == 0) return;
+        console.log('[DEBUG] Got lending players: ' + players);
+
+        for(i = 0; i < players.length; i++) {
+          var player = players[i];
+
+          $('#' + player.steamid).append(`
+            <img src='${player.avatarfull}'/>
+            <h1> <a href='${player.profileurl}'> ${player.personaname} <img src='steam_logo.svg'/> </a> </h1>
+            <br>
+            <span class='links'> <a href='https://seriousgmod.com/adminstats.php?sid=${player.id_32}'> AdminStats </a> </span>
+          `);
         }
+
       }
 
-      function createCard(title, desc, sobj, suser) {
+      // example payload(s)
+      // {"nonce": "123", "type": "player_result"/"batch_players"/"error", "data": { "player": {...}, "lender_id": "123"/null }
+      function createCard(data) {
+        // by now, type should've been validated to be 'result', so let's grab the data.
+        // and also going to assume that all the data is in fact present and nothing is missing.
+        data = data.data;
+        var player = data.player;
+        var lenderId = data.lender_id;
+        // oof.
+        var lenderMessage = "<font color='red'> is currently sharing with </font>";
+        if (!lenderId)
+          lenderMessage = "<font color='green'> is currently not sharing </font>";
+
+        // remove the placeholder card if it exists.
+        $('#placeholder').remove();
+
+        if (lenderId && $('#' + lenderId).length != 0) {
+          console.log('Card with ' + player.personaname + ' already exists!');
+          return;
+        }
+
+        console.log('Creating card with ' + player.personaname);
+
         $('.results').append(`
-          <div class='card'>
-            <!-- Profile Picture here :O
-              <img src='avatar_url'/>
-            -->
-            <h1 style='color: ${sobj.sharing ? 'darkred' : 'green'}'> ${title} </h1>
-            <p> ${desc} </p>
-            <span class='cardlinks'>
-              <a href='http://steamcommunity.com/profiles/${suser.steamid}> Profile of user </a> |
-              <a href='lender_url'> Profile of Lender </a>
-            </span>
+          <div class='card' id='${lenderId}'>
+            <img src='${player.avatarfull}'/>
+
+            <h1> <a href='${player.profileurl}'> ${player.personaname} <img src='steam_logo.svg'/> </a> </h1>
+            <h2> ${lenderMessage} ${lenderId} </h2>
+            <span class='links'> <a href='https://seriousgmod.com/adminstats.php?sid=${player.id_32}'> AdminStats </a> </span>
+            <hr/>
           </div>
         `);
       }
 
-      function createCards(json) {
-        var results = json.results[0];
-        console.log(results);
-
-        var keys = Object.keys(results);
-        var dCard = $('.card')[1];
-        if(keys.length > 0)
-          dCard.remove();
-        else {
-          var children = dCard.children;
-          children[0].innerHTML = 'No results!';
-          children[1].innerHTML = 'Nothing was found for the specified ids!';
-        }
-
-        Object.keys(results).forEach(function(key) {
-          var sObj = results[key];
-          var steam_user = sObj.steam_user;
-
-          createCard(`${steam_user.personaname} (${steam_user.id})`, sObj.sharing ? `is family sharing with ${sObj.lender}` : 'is not family sharing.', sObj, steam_user);
-        });
-      }
-
       function ws_callback(data) {
-        if (data.type == 'result') {
-          console.log('creating a card!');
-          createCard(data.title, data.desc, false);
-        }
+        if (data.type == 'player_result')
+          createCard(data);
+        else if (data.type == 'batch_players')
+          updateCard(data);
+        else
+          console.log('Something went horribly wrong...');
       }
 
       checkBtn.onclick = function(event) {
@@ -199,30 +236,31 @@ html
         }
 
         if (matched.length > 0) {
-          console.log('Sending the data over to the server!');
-          var toSend = matched.join(', ');
-          console.log(toSend);
+          // Get a nonce from the server
+          var rawIds = matched.join(',');
+          var nonce = undefined;
 
-          if(currentMode == 'websocket')
-            send_ws(toSend);
-          else {
-            $.ajax({
-              url: 'check',
-              data: `steamids=${toSend}&type=${shared ? 'shared' : 'recent'}`,
-              success:function(data) {
-                console.log(`Got ${JSON.stringify(data)}`);
-                $('.error').hide();
+          $.ajax({
+            type: 'POST',
+            url: '/api/check?steamids=' + rawIds,
+            success:function(d) {
+              console.log(d);
 
-                if(!data['results'][0].hasOwnProperty('error'))
-                  createCards(data);
-                else
-                  $('.error').hide().html(`<p> ${data['results'][0].error} </p>`).fadeIn();
-              },
-              error:function(j, t, e) {
-                $('.error').hide().html('<p> An error occurred! (Server may be down)</p>').fadeIn();
-              }
-            });
-          }
+              json = $.parseJSON(d);
+              nonce = json.nonce;
+
+              // return error or something?
+              if (nonce === undefined) return;
+
+              // try and connect to WS and register
+              console.log('[DEBUG] Attempting to send nonce to the server....');
+              ws_connect();
+              ws_registerCallback(ws_callback);
+
+              // send that nonce
+              ws_send(JSON.stringify({nonce: nonce}));
+            }
+          });
         } else {
           $('.error').hide().html('<p> No valid IDs passed </p>').fadeIn();
         }

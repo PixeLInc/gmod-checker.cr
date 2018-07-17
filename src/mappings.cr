@@ -20,6 +20,17 @@ module Steam
     def initialize(@id : ID, @persona_name : String, @avatar : String,
                    @profile_url : String)
     end
+
+    def to_json(builder : JSON::Builder)
+      builder.object do
+        builder.string "steamid"
+        id.to_json(builder)
+        builder.field "id_32", id.to_steam_32
+        builder.field "personaname", persona_name
+        builder.field "avatarfull", avatar
+        builder.field "profileurl", profile_url
+      end
+    end
   end
 
   struct Game
