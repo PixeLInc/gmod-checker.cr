@@ -1,6 +1,7 @@
 require "raze"
 require "kilt/slang"
 require "http/client"
+require "logger"
 require "./steam"
 require "./mappings"
 require "./job_controller"
@@ -30,7 +31,9 @@ def serialize(nonce, result)
   end
 end
 
-client = Steam::Client.new(ENV["STEAM_API_KEY"])
+logger = Logger.new(STDOUT)
+client = Steam::Client.new(ENV["STEAM_API_KEY"], logger)
+JobController.logger = logger
 
 get "/" do |ctx|
   render("views/index.slang")

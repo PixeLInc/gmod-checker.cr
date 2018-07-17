@@ -5,13 +5,16 @@ require "./mappings"
 class Steam::Client
   BASE_URL = "http://api.steampowered.com"
 
-  def initialize(@api_key : String)
+  def initialize(@api_key : String, @logger : Logger? = nil)
   end
 
   def request(endpoint : String)
-    response = HTTP::Client.get "#{BASE_URL}#{endpoint}&key=#{@api_key}"
-    raise "Request failed: #{response.inspect}" unless response.success?
+    @logger.try &.info "[Steam : HTTP OUT] #{endpoint}"
     # TODO: Implement some sort of ratelimiter here or something.
+    response = HTTP::Client.get "#{BASE_URL}#{endpoint}&key=#{@api_key}"
+    @logger.try &.info "[Steam : HTTP IN] #{response.status_code} #{response.status_message}"
+    raise "Steam API request failed: #{response.inspect}" unless response.success?
+    @logger.try { |l| l.debug "[HTTP IN] #{response.body}" if l.debug? }
     response.body
   end
 
