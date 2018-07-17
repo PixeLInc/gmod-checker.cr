@@ -31,7 +31,7 @@ module JobController
   # def get_job(nonce)
   # end
 
-  def dispatch(nonce : Nonce, &block : Job::Result | Job::Error ->)
+  def dispatch(nonce : Nonce, &block : Job::PlayerResult | Job::BatchPlayers | Job::Error ->)
     job = @@jobs[nonce]
     job.each_result { |r| block.call(r) }
     # TODO: Move into create in its own fiber
@@ -40,7 +40,7 @@ module JobController
 end
 
 class Job
-  struct Result
+  struct PlayerResult
     include JSON::Serializable
 
     getter player : Steam::Player
@@ -49,6 +49,15 @@ class Job
     getter lender_id : Steam::ID?
 
     def initialize(@player : Steam::Player, @lender_id : Steam::ID?)
+    end
+  end
+
+  struct BatchPlayers
+    include JSON::Serializable
+
+    getter players : Array(Steam::Player)
+
+    def initialize(@players : Array(Steam::Player) = [] of Steam::Player)
     end
   end
 
@@ -64,7 +73,7 @@ class Job
   getter size
 
   def initialize(@size : Int32)
-    @channel = Channel(Result | Error).new(size)
+    @channel = Channel(PlayerResult | BatchPlayers | Error).new(size)
   end
 
   delegate send, to: @channel

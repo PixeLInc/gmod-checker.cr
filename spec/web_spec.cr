@@ -16,13 +16,13 @@ describe "#serialize" do
   player_json = player.to_json
 
   it_serializes(
-    Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
-    to: %({"nonce":"0","type":"result","data":{"player":#{player_json},"lender_id":"0"}})
+    Job::PlayerResult.new(player: player, lender_id: Steam::ID.new(0_i64)),
+    to: %({"nonce":"0","type":"player_result","data":{"player":#{player_json},"lender_id":"0"}})
   )
 
   it_serializes(
-    Job::Result.new(player: player, lender_id: nil),
-    to: %({"nonce":"0","type":"result","data":{"player":#{player_json},"lender_id":null}})
+    Job::PlayerResult.new(player: player, lender_id: nil),
+    to: %({"nonce":"0","type":"player_result","data":{"player":#{player_json},"lender_id":null}})
   )
 
   it_serializes(

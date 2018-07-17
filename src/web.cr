@@ -10,8 +10,12 @@ def serialize(nonce, result)
     builder.object do
       builder.field("nonce", nonce.to_s)
       builder.string "type"
-      if result.is_a?(Job::Result)
-        builder.string "result"
+      if result.is_a?(Job::PlayerResult)
+        builder.string "player_result"
+        builder.string "data"
+        result.to_json(builder)
+      elsif result.is_a?(Job::BatchPlayers)
+        builder.string "batch_players"
         builder.string "data"
         result.to_json(builder)
       elsif result.is_a?(Job::Error)
@@ -38,7 +42,7 @@ post "/api/check" do |ctx|
 
   # ctx.halt({"error": ""}, 400) if !raw_ids || raw_ids == ""
 
-  nonce = JobController.create(raw_ids.size) do |job|
+  nonce = JobController.create(raw_ids.size + 1) do |job|
     ids = [] of Steam::ID
     raw_ids.each do |string_id|
       begin
@@ -59,9 +63,20 @@ post "/api/check" do |ctx|
       end
     end
 
+    lender_ids = [] of Steam::ID
+
     players.each do |player|
       lender_id = client.get_lender_id(player.id)
-      job.send Job::Result.new(player, lender_id)
+      lender_ids << lender_id unless lender_id.nil?
+
+      job.send Job::PlayerResult.new(player, lender_id)
+    end
+
+    unless lender_ids.empty?
+      lenders = client.get_players(lender_ids)
+      job.send Job::BatchPlayers.new(lenders)
+    else
+      job.send Job::BatchPlayers.new
     end
   end
 

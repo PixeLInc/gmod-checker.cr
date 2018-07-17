@@ -7,8 +7,8 @@ player = Steam::Player.new(
   profile_url: "profile_url")
 
 objects = {
-  Job::Result.new(player: player, lender_id: Steam::ID.new(0_i64)),
-  Job::Result.new(player: player, lender_id: nil),
+  Job::PlayerResult.new(player: player, lender_id: Steam::ID.new(0_i64)),
+  Job::PlayerResult.new(player: player, lender_id: nil),
   Job::Error.new(id: "foo", message: "bar"),
 }
 
