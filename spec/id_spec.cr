@@ -32,14 +32,14 @@ describe Steam::ID do
     end
   end
 
-  pending "serializes ID 32 format" do
+  it "serializes ID 32 format" do
     id_stubs.each do |data|
       id = Steam::ID.new(data.id_64)
       id.to_steam_32.should eq data.id_32
     end
   end
 
-  pending "serializes ID 3 format" do
+  it "serializes ID 3 format" do
     id_stubs.each do |data|
       id = Steam::ID.new(data.id_64)
       id.to_steam_3.should eq data.id_3
