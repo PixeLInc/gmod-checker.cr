@@ -25,7 +25,7 @@ module Steam
       builder.object do
         builder.string "steamid"
         id.to_json(builder)
-        builder.field "id_32", id.to_steam_32
+        builder.field "id_32", id.to_s(Steam::ID::Format::Default)
         builder.field "personaname", persona_name
         builder.field "avatarfull", avatar
         builder.field "profileurl", profile_url
