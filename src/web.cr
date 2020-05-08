@@ -53,6 +53,8 @@ post "/api/check" do |ctx|
         # Enforce Public universe bit (STEAM_1..) and Individual account type:
         id.universe = :public
         id.account_type = :individual
+        id.instance = 1
+
         ids << id
       rescue ex : Steam::ID::Error
         job.send Job::Error.new(string_id, ex.message)
