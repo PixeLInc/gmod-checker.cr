@@ -10,21 +10,23 @@ class Handlers::SocketHandler
       builder.object do
         builder.field("nonce", nonce.to_s)
         builder.string "type"
-        if result.is_a?(Job::PlayerResult)
+        case result
+        when Job::PlayerResult
           builder.string "player_result"
           builder.string "data"
           result.to_json(builder)
-        elsif result.is_a?(Job::BatchPlayers)
+        when Job::BatchPlayers
           builder.string "batch_players"
           builder.string "data"
           result.to_json(builder)
-        elsif result.is_a?(Job::Error)
+        when Job::Error
           builder.string "error"
           builder.field("message", result.message)
           builder.field("data", result.id)
-        elsif result.is_a?(Exception)
+        when Exception
           builder.string "error"
           builder.field("message", result.message)
+        else
         end
       end
     end
