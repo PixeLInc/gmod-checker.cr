@@ -16,16 +16,16 @@ end
 class Steam::Client
   BASE_URL = "http://api.steampowered.com"
 
-  def initialize(@api_key : String, @logger : Logger? = nil)
+  def initialize(@api_key : String, @logger : Log? = nil)
   end
 
   def request(endpoint : String)
-    @logger.try &.info "[Steam : HTTP OUT] #{endpoint}"
+    @logger.try &.info { "[Steam : HTTP OUT] #{endpoint}" }
     # TODO: Implement some sort of ratelimiter here or something.
     response = HTTP::Client.get "#{BASE_URL}#{endpoint}&key=#{@api_key}"
-    @logger.try &.info "[Steam : HTTP IN] #{response.status_code} #{response.status_message}"
+    @logger.try &.info { "[Steam : HTTP IN] #{response.status_code} #{response.status_message}" }
     raise "Steam API request failed: #{response.inspect}" unless response.success?
-    @logger.try { |l| l.debug "[HTTP IN] #{response.body}" if l.debug? }
+    @logger.try { |l| l.debug { "[HTTP IN] #{response.body}" } if l.level == Log::Severity::Debug }
     response.body
   end
 

@@ -7,14 +7,14 @@ module JobController
   TIMEOUT = 0
 
   @@jobs = {} of Nonce => Job
-  @@logger : Logger? = nil
+  @@logger : Log? = nil
 
-  def logger=(@@logger : Logger)
+  def logger=(@@logger : Log)
   end
 
   def create(size : Int32, &block : Job ->) : Nonce
     nonce = generate_nonce
-    @@logger.try &.info "[JobController : CREATE] #{nonce} (size: #{size})"
+    @@logger.try &.info { "[JobController : CREATE] #{nonce} (size: #{size})" }
     job = Job.new(size)
     @@jobs[nonce] = job
     spawn do
@@ -30,7 +30,7 @@ module JobController
   def cleanup(nonce)
     sleep TIMEOUT
     @@jobs.delete(nonce)
-    @@logger.try &.info "[JobController : DELETE] #{nonce}"
+    @@logger.try &.info { "[JobController : DELETE] #{nonce}" }
   end
 
   # TODO: Blocking access to jobs with mutex?
@@ -39,7 +39,7 @@ module JobController
 
   def dispatch(nonce : Nonce, &block : Job::PlayerResult | Job::BatchPlayers | Job::Error ->)
     job = @@jobs[nonce]
-    @@logger.try &.info "[JobController : DISPATCH] #{nonce} (size: #{job.size})"
+    @@logger.try &.info { "[JobController : DISPATCH] #{nonce} (size: #{job.size})" }
     job.each_result { |r| block.call(r) }
     # TODO: Move into create in its own fiber
     cleanup(nonce)
