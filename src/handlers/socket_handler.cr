@@ -30,7 +30,6 @@ class Handlers::SocketHandler
     end
   end
 
-
   def ws(socket : HTTP::WebSocket, context : HTTP::Server::Context)
     socket.on_message do |message|
       nonce = JobController::Nonce.from_json(message, "nonce")

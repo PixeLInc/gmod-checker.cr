@@ -10,9 +10,9 @@ server = HTTP::Server.new([
   HTTP::ErrorHandler.new,
   HTTP::LogHandler.new,
   HTTP::StaticFileHandler.new("static",
-                              directory_listing: false),
+    directory_listing: false),
   Handlers::WebRouter.new,
-  Handlers::SocketHandler.new
+  Handlers::SocketHandler.new,
 ])
 
 backend = Log::IOBackend.new

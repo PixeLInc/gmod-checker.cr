@@ -47,9 +47,9 @@ class Handlers::WebRouter
         unless player_ids.includes? id
           invalid_ids << id
           job.send Job::Error.new(
-                id.to_s(Steam::ID::Format::Default),
-                "Not found"
-              )
+            id.to_s(Steam::ID::Format::Default),
+            "Not found"
+          )
         end
       end
 
@@ -76,7 +76,7 @@ class Handlers::WebRouter
 
   def call(context : HTTP::Server::Context)
     case context.request.path
-    when "/" then context.response.print(Kilt.render("views/index.slang"))
+    when "/"          then context.response.print(Kilt.render("views/index.slang"))
     when "/api/check" then handle_check(context)
     else
       call_next(context)
