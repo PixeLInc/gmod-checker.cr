@@ -20,10 +20,10 @@ class Steam::Client
   end
 
   def request(endpoint : String)
-    @logger.try &.info { "[Steam : HTTP OUT] #{endpoint}" }
+    @logger.try &.info { "[HTTP OUT] #{endpoint}" }
     # TODO: Implement some sort of ratelimiter here or something.
     response = HTTP::Client.get "#{BASE_URL}#{endpoint}&key=#{@api_key}"
-    @logger.try &.info { "[Steam : HTTP IN] #{response.status_code} #{response.status_message}" }
+    @logger.try &.info { "[HTTP IN] #{response.status_code} #{response.status_message}" }
     raise "Steam API request failed: #{response.inspect}" unless response.success?
     @logger.try { |l| l.debug { "[HTTP IN] #{response.body}" } if l.level == Log::Severity::Debug }
     response.body
@@ -42,7 +42,7 @@ class Steam::Client
 
   def get_players(player_ids : Array(ID)) : Array(Player)
     query = HTTP::Params.build do |form|
-      form.add "steamids", player_ids.map { |id| id.to_u64 }.join(',')
+      form.add "steamids", player_ids.map(&.to_u64).join(',')
     end
     response = request("/ISteamUser/GetPlayerSummaries/v0002?#{query}")
     parse(Array(Player), from: response, in: "players")
