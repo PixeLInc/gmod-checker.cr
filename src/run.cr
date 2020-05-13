@@ -1,10 +1,4 @@
-require "http/server"
-require "log"
-require "./steam"
-require "./mappings"
-require "./job_controller"
-require "./handlers/web_router"
-require "./handlers/socket_handler"
+require "./gmod_checker"
 
 server = HTTP::Server.new([
   HTTP::ErrorHandler.new,
