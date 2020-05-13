@@ -4,9 +4,9 @@ packages:
   - shards
   - zlib-dev
   - openssl-dev
-  - libcrypto
+  - libcrypto1.1
 sources:
-  - https://git.sr.ht/~z64/gmod_checker.cr
+  - https://git.sr.ht/~pixelinc/gmod_checker.cr
 tasks:
   - format: |
       cd gmod_checker.cr
