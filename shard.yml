@@ -9,8 +9,6 @@ targets:
     main: src/run.cr
 
 dependencies:
-  raze:
-    github: samueleaton/raze
   slang:
     github: jeromegn/slang
   pg:
