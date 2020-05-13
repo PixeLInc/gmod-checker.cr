@@ -6,7 +6,7 @@ packages:
   - openssl-dev
   - libcrypto1.1
 sources:
-  - https://git.sr.ht/~pixelinc/gmod_checker.cr
+  - https://git.sr.ht/~pixelinc/gmod-checker.cr
 tasks:
   - format: |
       cd gmod_checker.cr
