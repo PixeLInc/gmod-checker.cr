@@ -9,11 +9,11 @@ sources:
   - https://git.sr.ht/~pixelinc/gmod-checker.cr
 tasks:
   - format: |
-      cd gmod_checker.cr
+      cd gmod-checker.cr
       crystal tool format --check
   - compile: |
-      cd gmod_checker.cr
+      cd gmod-checker.cr
       shards build --no-codegen
   - spec: |
-      cd gmod_checker.cr
+      cd gmod-checker.cr
       crystal spec
