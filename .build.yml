@@ -1,0 +1,19 @@
+image: alpine/edge
+packages:
+  - crystal
+  - shards
+  - zlib-dev
+  - openssl-dev
+  - libcrypto
+sources:
+  - https://git.sr.ht/~z64/gmod_checker.cr
+tasks:
+  - format: |
+      cd gmod_checker.cr
+      crystal tool format --check
+  - compile: |
+      cd gmod_checker.cr
+      shards build --no-codegen
+  - spec: |
+      cd gmod_checker.cr
+      crystal spec
