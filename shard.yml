@@ -9,6 +9,8 @@ targets:
     main: src/run.cr
 
 dependencies:
+  kilt:
+    github: jeromegn/kilt
   slang:
     github: jeromegn/slang
   pg:
