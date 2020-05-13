@@ -1,2 +1,2 @@
 require "spec"
-require "../src/web"
+require "../src/gmod_checker"

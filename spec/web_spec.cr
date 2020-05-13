@@ -1,7 +1,7 @@
 require "./spec_helper"
 
 def it_serializes(object, to string)
-  it "serializes #{object} into #{string}" do
+  pending "serializes #{object} into #{string}" do
     result = serialize(0, object)
     result.should eq string
   end
